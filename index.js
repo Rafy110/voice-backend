@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 // Connect to (or create) a database file called calls.db
-const db = new Database('calls.db');
+const db = new Database('/data/calls.db');
 
 // Create a table to store call data, only if it doesn't already exist
 db.exec(`
