@@ -4,10 +4,8 @@ const Database = require('better-sqlite3');
 const app = express();
 app.use(express.json());
 
-// Connect to (or create) a database file called calls.db
 const db = new Database('/data/calls.db');
 
-// Create a table to store call data, only if it doesn't already exist
 db.exec(`
   CREATE TABLE IF NOT EXISTS calls (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,7 +19,6 @@ db.exec(`
 app.post('/webhook', (req, res) => {
   console.log('Event from Vapi:', JSON.stringify(req.body, null, 2));
 
-  // Save this event into the database
   const stmt = db.prepare(
     'INSERT INTO calls (call_id, event_type, payload) VALUES (?, ?, ?)'
   );
@@ -32,6 +29,11 @@ app.post('/webhook', (req, res) => {
   );
 
   res.status(200).send('ok');
+});
+
+app.get('/calls', (req, res) => {
+  const rows = db.prepare('SELECT * FROM calls ORDER BY id DESC').all();
+  res.json(rows);
 });
 
 app.get('/', (req, res) => {
