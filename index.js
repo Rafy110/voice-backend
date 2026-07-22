@@ -16,19 +16,34 @@ db.exec(`
   )
 `);
 
+function logEvent(level, message, data = {}) {
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...data
+  }));
+}
+
 app.post('/webhook', (req, res) => {
-  console.log('Event from Vapi:', JSON.stringify(req.body, null, 2));
+  try {
+    const callId = req.body?.call?.id || 'unknown';
+    const eventType = req.body?.message?.type || 'unknown';
 
-  const stmt = db.prepare(
-    'INSERT INTO calls (call_id, event_type, payload) VALUES (?, ?, ?)'
-  );
-  stmt.run(
-    req.body?.call?.id || 'unknown',
-    req.body?.message?.type || 'unknown',
-    JSON.stringify(req.body)
-  );
+    logEvent('info', 'Received Vapi event', { callId, eventType });
 
-  res.status(200).send('ok');
+    const stmt = db.prepare(
+      'INSERT INTO calls (call_id, event_type, payload) VALUES (?, ?, ?)'
+    );
+    stmt.run(callId, eventType, JSON.stringify(req.body));
+
+    logEvent('info', 'Event saved to database', { callId, eventType });
+
+    res.status(200).send('ok');
+  } catch (err) {
+    logEvent('error', 'Failed to process webhook event', { error: err.message });
+    res.status(500).send('error');
+  }
 });
 
 app.get('/calls', (req, res) => {
