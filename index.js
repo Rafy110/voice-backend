@@ -51,6 +51,16 @@ app.get('/calls', (req, res) => {
   res.json(rows);
 });
 
+app.get('/health', (req, res) => {
+  try {
+    // Confirm the database is actually reachable, not just that the server is up
+    db.prepare('SELECT 1').get();
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('Backend is running');
 });
